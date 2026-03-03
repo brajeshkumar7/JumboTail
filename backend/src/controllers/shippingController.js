@@ -2,6 +2,7 @@
  * Controllers: HTTP only. No business logic – delegate to services.
  */
 import { calculateShippingCharge } from '../services/shippingChargeService.js';
+import { calculateSellerToCustomerShipping } from '../services/shippingOrchestrationService.js';
 
 export async function getShippingCharge(req, res) {
   const { warehouseId, customerId, productId, quantity, deliverySpeed } = req.query;
@@ -67,3 +68,61 @@ export async function getShippingCharge(req, res) {
     totalCharge: result.totalCharge,
   });
 }
+
+export async function calculateShippingForSeller(req, res) {
+  const { sellerId, customerId, productId, quantity, deliverySpeed } = req.body || {};
+
+  const sellerIdNum = Number(sellerId);
+  const customerIdNum = Number(customerId);
+  const productIdNum = Number(productId);
+  const quantityNum = Number(quantity);
+
+  if (!sellerId || Number.isNaN(sellerIdNum) || sellerIdNum <= 0) {
+    return res
+      .status(400)
+      .json({ error: 'Invalid sellerId. It must be a positive number.' });
+  }
+
+  if (!customerId || Number.isNaN(customerIdNum) || customerIdNum <= 0) {
+    return res
+      .status(400)
+      .json({ error: 'Invalid customerId. It must be a positive number.' });
+  }
+
+  if (!productId || Number.isNaN(productIdNum) || productIdNum <= 0) {
+    return res
+      .status(400)
+      .json({ error: 'Invalid productId. It must be a positive number.' });
+  }
+
+  if (!quantity || Number.isNaN(quantityNum) || quantityNum <= 0) {
+    return res
+      .status(400)
+      .json({ error: 'Invalid quantity. It must be a positive number.' });
+  }
+
+  let speed = 'STANDARD';
+  if (deliverySpeed) {
+    const normalized = String(deliverySpeed).toUpperCase();
+    if (normalized !== 'STANDARD' && normalized !== 'EXPRESS') {
+      return res.status(400).json({
+        error: 'Unsupported deliverySpeed. Allowed values: STANDARD, EXPRESS.',
+      });
+    }
+    speed = normalized;
+  }
+
+  const result = await calculateSellerToCustomerShipping({
+    sellerId: sellerIdNum,
+    customerId: customerIdNum,
+    productId: productIdNum,
+    quantity: quantityNum,
+    deliverySpeed: speed,
+  });
+
+  return res.json({
+    warehouse: result.warehouse,
+    shipping: result.shipping,
+  });
+}
+
