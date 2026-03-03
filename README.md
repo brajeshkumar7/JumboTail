@@ -263,19 +263,37 @@ Redis (Upstash) is used with a **cache‑aside** strategy:
   - Key: `nearest_warehouse:seller:{sellerId}`
   - TTL: `cacheTtl.medium` (5 minutes).
   - Flow:
-    1. `warehouseService.getNearestWarehouseForSeller` checks Redis.
-    2. On miss, fetches from DB, computes nearest, then `SETEX`.
+    1. `warehouseService.getNearestWarehouseForSeller` checks Redis via `redis.get()`.
+    2. On miss, fetches from DB, computes nearest, then stores via `redis.set(key, value, {ex: ttl})`.
 
 - **Shipping charge**
   - Key: `shipping_charge:wh:{warehouseId}:cust:{customerId}:prod:{productId}:qty:{quantity}:speed:{deliverySpeed}`
   - TTL: 5 minutes.
+  - Uses `redis.set()` with `{ex: cacheTtl.medium}` option for expiration.
+
+- **Items cache**
+  - Key: `item:{id}`
+  - TTL: `cacheTtl.short` (1 minute).
+  - Used by item service for quick lookups.
 
 - **Combined (orchestrated) shipping**
   - Key: `shipping_combined:seller:{sellerId}:cust:{customerId}:prod:{productId}:qty:{quantity}:speed:{deliverySpeed}`
   - TTL: 5 minutes.
+  - Coordinates nearest warehouse + shipping charge, then caches the complete result.
+
+**Upstash Redis API**  
+The project uses `@upstash/redis` client with the following methods:
+- `redis.get(key)` – retrieves cached value
+- `redis.set(key, value, {ex: ttlSeconds})` – stores value with expiration time
+- `redis.del(key)` – removes key from cache
+
+Example:
+```javascript
+await redis.set(cacheKey, JSON.stringify(data), {ex: 300}); // 5 minute TTL
+```
 
 **Resilience**  
-Every Redis `GET`/`SETEX` is wrapped in `try/catch`; failures are logged and **do not break the core flow**. The system falls back to DB + computation.
+Every Redis operation is wrapped in `try/catch`; failures are logged and **do not break the core flow**. The system falls back to DB + computation automatically, ensuring the API always responds even if Redis is unavailable.
 
 ---
 
@@ -309,6 +327,43 @@ Example responses:
 ```
 
 In non‑production environments, the error handler also returns a `stack` field to aid debugging.
+
+---
+
+## Frontend form behavior
+
+The shipping calculator page (`ShippingCalculatorPage.jsx`) provides the following features:
+
+### Auto-selection on data load
+When the application loads master data (sellers, customers, products, warehouses), the form automatically selects:
+- **First seller** in the list
+- **First customer** in the list
+- **First product** in the list
+- **Default quantity**: 1
+- **Default delivery speed**: STANDARD
+
+This ensures the form is always in a valid state and ready to calculate without additional user interaction.
+
+### Form validation
+Before submission, the form performs client-side validation:
+
+**Required fields validation:**
+- Seller ID must be a positive number
+- Customer ID must be a positive number
+- Product ID must be a positive number
+- Quantity must be a positive number (minimum 1)
+
+If any field fails validation, a user-friendly alert is displayed indicating which field needs attention.
+
+**Server-side validation:**
+The backend also validates all parameters independently, returning `400 Bad Request` with detailed error messages if validation fails. This provides defense-in-depth validation.
+
+### Master data management
+Users can add new sellers, customers, products, and warehouses via the "Add seller / product / customer / warehouse" button. Form inputs are parsed and validated before submission:
+- Seller: Name is required; phone, latitude, and longitude are optional
+- Customer: Name, phone, latitude, and longitude are all required
+- Warehouse: Name, latitude, and longitude are all required
+- Product: Seller must be selected; all other fields are required
 
 ---
 
@@ -376,6 +431,22 @@ npm test
 ```
 
 This executes Jest + Supertest tests in `backend/tests/shipping.api.test.js`.
+
+### 6. Clean up test data (optional)
+
+A cleanup script is available to remove test data from the database:
+
+```bash
+cd d:\JumboTail\backend
+node cleanup-test-data.js
+```
+
+This script removes:
+- All test sellers (Test Seller, No Location Seller)
+- All test customers (Test Customer)
+- All test products that start with "Test"
+
+Use this after initial setup if you've populated the database with test data and want to start fresh.
 
 ---
 
