@@ -8,12 +8,22 @@ import { ExpressDeliveryStrategy } from './ExpressDeliveryStrategy.js';
 export function getDeliveryPricingStrategy(speed = 'STANDARD') {
   const normalized = String(speed || '').toUpperCase();
 
+  if (!normalized) {
+    const err = new Error('deliverySpeed is required');
+    err.statusCode = 400;
+    throw err;
+  }
+
   switch (normalized) {
     case 'EXPRESS':
       return new ExpressDeliveryStrategy();
     case 'STANDARD':
-    default:
       return new StandardDeliveryStrategy();
+    default: {
+      const err = new Error('Unsupported deliverySpeed. Allowed values: STANDARD, EXPRESS.');
+      err.statusCode = 400;
+      throw err;
+    }
   }
 }
 
