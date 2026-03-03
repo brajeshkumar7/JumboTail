@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { api } from '../utils/api';
+import { shippingApi } from '../services/shippingApi';
 
 const SELLERS = [
   { id: 1, name: 'Seller 1' },
@@ -43,7 +43,7 @@ export function ShippingCalculatorPage() {
 
     setLoading(true);
     try {
-      const response = await api.post('/v1/shipping-charge/calculate', {
+      const response = await shippingApi.calculateSellerShipping({
         sellerId: Number(sellerId),
         customerId: Number(customerId),
         productId: Number(productId),
@@ -53,7 +53,7 @@ export function ShippingCalculatorPage() {
       setResult(response);
     } catch (err) {
       const message =
-        err?.body?.error || err.message || 'Failed to calculate shipping charge';
+        err?.data?.error || err.message || 'Failed to calculate shipping charge';
       setError(message);
     } finally {
       setLoading(false);
