@@ -53,6 +53,36 @@ export function ShippingCalculatorPage() {
     e.preventDefault();
     clearError();
 
+    // Validate all required fields are selected
+    const sellerIdNum = Number(selectedOrder.sellerId);
+    const customerIdNum = Number(selectedOrder.customerId);
+    const productIdNum = Number(selectedOrder.productId);
+    const quantityNum = Number(selectedOrder.quantity);
+
+    if (Number.isNaN(sellerIdNum) || sellerIdNum <= 0) {
+      // eslint-disable-next-line no-alert
+      alert('Please select a valid seller.');
+      return;
+    }
+
+    if (Number.isNaN(customerIdNum) || customerIdNum <= 0) {
+      // eslint-disable-next-line no-alert
+      alert('Please select a valid customer.');
+      return;
+    }
+
+    if (Number.isNaN(productIdNum) || productIdNum <= 0) {
+      // eslint-disable-next-line no-alert
+      alert('Please select a valid product.');
+      return;
+    }
+
+    if (Number.isNaN(quantityNum) || quantityNum <= 0) {
+      // eslint-disable-next-line no-alert
+      alert('Please enter a valid quantity (must be greater than 0).');
+      return;
+    }
+
     try {
       await calculateShipping();
     } catch {
@@ -230,9 +260,8 @@ export function ShippingCalculatorPage() {
                         value={productForm.sellerId}
                         onChange={(e) => setProductForm((s) => ({ ...s, sellerId: e.target.value }))}
                       >
-                        <option value="">Select seller</option>
                         {sellerOptions.map((s) => (
-                          <option key={s.id} value={s.id}>
+                        <option key={s.id} value={String(s.id)}>
                             {s.name}
                           </option>
                         ))}
@@ -283,9 +312,8 @@ export function ShippingCalculatorPage() {
               value={selectedOrder.sellerId}
               onChange={(e) => setSelectedOrder({ sellerId: e.target.value })}
             >
-              <option value="">Select seller</option>
               {sellerOptions.map((s) => (
-                <option key={s.id} value={s.id}>
+                <option key={s.id} value={String(s.id)}>
                   {s.name}
                 </option>
               ))}
@@ -298,9 +326,8 @@ export function ShippingCalculatorPage() {
               value={selectedOrder.customerId}
               onChange={(e) => setSelectedOrder({ customerId: e.target.value })}
             >
-              <option value="">Select customer</option>
               {customerOptions.map((c) => (
-                <option key={c.id} value={c.id}>
+                <option key={c.id} value={String(c.id)}>
                   {c.name}
                 </option>
               ))}
@@ -315,9 +342,8 @@ export function ShippingCalculatorPage() {
               value={selectedOrder.productId}
               onChange={(e) => setSelectedOrder({ productId: e.target.value })}
             >
-              <option value="">Select product</option>
               {productOptions.map((p) => (
-                <option key={p.id} value={p.id}>
+                <option key={p.id} value={String(p.id)}>
                   {p.name}
                 </option>
               ))}

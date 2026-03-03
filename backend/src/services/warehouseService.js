@@ -70,10 +70,10 @@ export async function getNearestWarehouseForSeller(sellerId) {
 
   if (redis) {
     try {
-      await redis.setex(
+      await redis.set(
         cacheKey,
-        cacheTtl.medium,
-        JSON.stringify(nearest)
+        JSON.stringify(nearest),
+        {ex: cacheTtl.medium}
       );
     } catch (err) {
       console.error('Redis set error (nearest warehouse):', err);

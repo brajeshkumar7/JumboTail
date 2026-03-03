@@ -113,10 +113,10 @@ export async function calculateShippingCharge({
 
   if (redis) {
     try {
-      await redis.setex(
+      await redis.set(
         cacheKey,
-        cacheTtl.medium,
-        JSON.stringify(result)
+        JSON.stringify(result),
+        {ex: cacheTtl.medium}
       );
     } catch (err) {
       console.error('Redis set error (shipping charge):', err);

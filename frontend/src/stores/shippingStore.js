@@ -58,7 +58,24 @@ export const useShippingStore = create((set) => ({
         masterDataApi.listProducts(),
         masterDataApi.listWarehouses(),
       ]);
-      set({ sellers, customers, products, warehouses, loading: false });
+      
+      // Auto-select first items
+      const newSelectedOrder = {
+        sellerId: sellers.length > 0 ? String(sellers[0].id) : '',
+        customerId: customers.length > 0 ? String(customers[0].id) : '',
+        productId: products.length > 0 ? String(products[0].id) : '',
+        quantity: 1,
+        deliverySpeed: 'STANDARD',
+      };
+      
+      set({ 
+        sellers, 
+        customers, 
+        products, 
+        warehouses, 
+        selectedOrder: newSelectedOrder,
+        loading: false 
+      });
     } catch (err) {
       set({ error: err?.data?.error || err.message, loading: false });
       throw err;

@@ -15,7 +15,7 @@ async function getById(id) {
   }
   const item = await itemRepository.findById(id);
   if (redis && item) {
-    await redis.setex(`${CACHE_PREFIX}:${id}`, TTL, JSON.stringify(item));
+    await redis.set(`${CACHE_PREFIX}:${id}`, JSON.stringify(item), {ex: TTL});
   }
   return item;
 }

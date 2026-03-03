@@ -7,30 +7,53 @@ import { calculateSellerToCustomerShipping } from '../services/shippingOrchestra
 export async function getShippingCharge(req, res) {
   const { warehouseId, customerId, productId, quantity, deliverySpeed } = req.query;
 
+  // Validate warehouseId
+  if (warehouseId === null || warehouseId === undefined || warehouseId === '') {
+    return res
+      .status(400)
+      .json({ error: 'warehouseId is required' });
+  }
   const warehouseIdNum = Number(warehouseId);
-  const customerIdNum = Number(customerId);
-  const productIdNum = Number(productId);
-  const quantityNum = Number(quantity);
-
-  if (!warehouseId || Number.isNaN(warehouseIdNum) || warehouseIdNum <= 0) {
+  if (Number.isNaN(warehouseIdNum) || warehouseIdNum <= 0) {
     return res
       .status(400)
       .json({ error: 'Invalid warehouseId. It must be a positive number.' });
   }
 
-  if (!customerId || Number.isNaN(customerIdNum) || customerIdNum <= 0) {
+  // Validate customerId
+  if (customerId === null || customerId === undefined || customerId === '') {
+    return res
+      .status(400)
+      .json({ error: 'customerId is required' });
+  }
+  const customerIdNum = Number(customerId);
+  if (Number.isNaN(customerIdNum) || customerIdNum <= 0) {
     return res
       .status(400)
       .json({ error: 'Invalid customerId. It must be a positive number.' });
   }
 
-  if (!productId || Number.isNaN(productIdNum) || productIdNum <= 0) {
+  // Validate productId
+  if (productId === null || productId === undefined || productId === '') {
+    return res
+      .status(400)
+      .json({ error: 'productId is required' });
+  }
+  const productIdNum = Number(productId);
+  if (Number.isNaN(productIdNum) || productIdNum <= 0) {
     return res
       .status(400)
       .json({ error: 'Invalid productId. It must be a positive number.' });
   }
 
-  if (!quantity || Number.isNaN(quantityNum) || quantityNum <= 0) {
+  // Validate quantity
+  if (quantity === null || quantity === undefined || quantity === '') {
+    return res
+      .status(400)
+      .json({ error: 'quantity is required' });
+  }
+  const quantityNum = Number(quantity);
+  if (Number.isNaN(quantityNum) || quantityNum <= 0) {
     return res
       .status(400)
       .json({ error: 'Invalid quantity. It must be a positive number.' });
@@ -72,30 +95,53 @@ export async function getShippingCharge(req, res) {
 export async function calculateShippingForSeller(req, res) {
   const { sellerId, customerId, productId, quantity, deliverySpeed } = req.body || {};
 
+  // Validate sellerId
+  if (sellerId === null || sellerId === undefined || sellerId === '') {
+    return res
+      .status(400)
+      .json({ error: 'sellerId is required' });
+  }
   const sellerIdNum = Number(sellerId);
-  const customerIdNum = Number(customerId);
-  const productIdNum = Number(productId);
-  const quantityNum = Number(quantity);
-
-  if (!sellerId || Number.isNaN(sellerIdNum) || sellerIdNum <= 0) {
+  if (Number.isNaN(sellerIdNum) || sellerIdNum <= 0) {
     return res
       .status(400)
       .json({ error: 'Invalid sellerId. It must be a positive number.' });
   }
 
-  if (!customerId || Number.isNaN(customerIdNum) || customerIdNum <= 0) {
+  // Validate customerId
+  if (customerId === null || customerId === undefined || customerId === '') {
+    return res
+      .status(400)
+      .json({ error: 'customerId is required' });
+  }
+  const customerIdNum = Number(customerId);
+  if (Number.isNaN(customerIdNum) || customerIdNum <= 0) {
     return res
       .status(400)
       .json({ error: 'Invalid customerId. It must be a positive number.' });
   }
 
-  if (!productId || Number.isNaN(productIdNum) || productIdNum <= 0) {
+  // Validate productId
+  if (productId === null || productId === undefined || productId === '') {
+    return res
+      .status(400)
+      .json({ error: 'productId is required' });
+  }
+  const productIdNum = Number(productId);
+  if (Number.isNaN(productIdNum) || productIdNum <= 0) {
     return res
       .status(400)
       .json({ error: 'Invalid productId. It must be a positive number.' });
   }
 
-  if (!quantity || Number.isNaN(quantityNum) || quantityNum <= 0) {
+  // Validate quantity
+  if (quantity === null || quantity === undefined || quantity === '') {
+    return res
+      .status(400)
+      .json({ error: 'quantity is required' });
+  }
+  const quantityNum = Number(quantity);
+  if (Number.isNaN(quantityNum) || quantityNum <= 0) {
     return res
       .status(400)
       .json({ error: 'Invalid quantity. It must be a positive number.' });
