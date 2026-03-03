@@ -1,12 +1,28 @@
 import sellerRepository from '../repositories/sellerRepository.js';
 import warehouseRepository from '../repositories/warehouseRepository.js';
 import { haversineDistanceKm } from '../utils/geo.js';
+import redis from '../config/redis.js';
+import { cacheKeys, cacheTtl } from '../utils/cacheKeys.js';
 
 /**
  * Returns the nearest warehouse for the given seller ID.
  * Throws if seller or warehouse data is missing.
  */
 export async function getNearestWarehouseForSeller(sellerId) {
+  const cacheKey = `${cacheKeys.nearestWarehouse}:seller:${sellerId}`;
+
+  if (redis) {
+    try {
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        return typeof cached === 'string' ? JSON.parse(cached) : cached;
+      }
+    } catch (err) {
+      // Cache failure should not break core flow
+      console.error('Redis get error (nearest warehouse):', err);
+    }
+  }
+
   const sellerLocation = await sellerRepository.findLocationById(sellerId);
   if (!sellerLocation) {
     const error = new Error('Seller not found');
@@ -50,6 +66,18 @@ export async function getNearestWarehouseForSeller(sellerId) {
     const error = new Error('No warehouses with valid location');
     error.statusCode = 404;
     throw error;
+  }
+
+  if (redis) {
+    try {
+      await redis.setex(
+        cacheKey,
+        cacheTtl.medium,
+        JSON.stringify(nearest)
+      );
+    } catch (err) {
+      console.error('Redis set error (nearest warehouse):', err);
+    }
   }
 
   return nearest;

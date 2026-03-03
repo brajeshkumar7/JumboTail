@@ -4,6 +4,8 @@ import productRepository from '../repositories/productRepository.js';
 import { haversineDistanceKm } from '../utils/geo.js';
 import { calculateShippingCost } from './shippingCostService.js';
 import { calculateDeliveryPrice } from './deliveryPricingService.js';
+import redis from '../config/redis.js';
+import { cacheKeys, cacheTtl } from '../utils/cacheKeys.js';
 
 /**
  * High-level shipping charge calculation.
@@ -27,6 +29,19 @@ export async function calculateShippingCharge({
     const error = new Error('Invalid shipping charge input');
     error.statusCode = 400;
     throw error;
+  }
+
+  const cacheKey = `${cacheKeys.shippingCharge}:wh:${warehouseId}:cust:${customerId}:prod:${productId}:qty:${quantity}:speed:${deliverySpeed}`;
+
+  if (redis) {
+    try {
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        return typeof cached === 'string' ? JSON.parse(cached) : cached;
+      }
+    } catch (err) {
+      console.error('Redis get error (shipping charge):', err);
+    }
   }
 
   const [warehouse, customer, product] = await Promise.all([
@@ -83,7 +98,7 @@ export async function calculateShippingCharge({
     deliverySpeed
   );
 
-  return {
+  const result = {
     warehouseId,
     customerId,
     productId,
@@ -95,4 +110,18 @@ export async function calculateShippingCharge({
     deliverySpeed: deliveryPricing.speed,
     totalCharge: deliveryPricing.total,
   };
+
+  if (redis) {
+    try {
+      await redis.setex(
+        cacheKey,
+        cacheTtl.medium,
+        JSON.stringify(result)
+      );
+    } catch (err) {
+      console.error('Redis set error (shipping charge):', err);
+    }
+  }
+
+  return result;
 }

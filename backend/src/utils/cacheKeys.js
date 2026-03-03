@@ -4,6 +4,9 @@
 export const cacheKeys = {
   item: 'item',
   user: 'user',
+  nearestWarehouse: 'nearest_warehouse',
+  shippingCharge: 'shipping_charge',
+  combinedShipping: 'shipping_combined',
 };
 
 export const cacheTtl = {

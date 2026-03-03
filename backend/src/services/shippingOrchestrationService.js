@@ -1,5 +1,7 @@
 import { getNearestWarehouseForSeller } from './warehouseService.js';
 import { calculateShippingCharge } from './shippingChargeService.js';
+import redis from '../config/redis.js';
+import { cacheKeys, cacheTtl } from '../utils/cacheKeys.js';
 
 /**
  * Orchestration service:
@@ -19,6 +21,19 @@ export async function calculateSellerToCustomerShipping({
     throw error;
   }
 
+  const cacheKey = `${cacheKeys.combinedShipping}:seller:${sellerId}:cust:${customerId}:prod:${productId}:qty:${quantity}:speed:${deliverySpeed}`;
+
+  if (redis) {
+    try {
+      const cached = await redis.get(cacheKey);
+      if (cached) {
+        return typeof cached === 'string' ? JSON.parse(cached) : cached;
+      }
+    } catch (err) {
+      console.error('Redis get error (combined shipping):', err);
+    }
+  }
+
   const nearestWarehouse = await getNearestWarehouseForSeller(sellerId);
 
   const shipping = await calculateShippingCharge({
@@ -29,7 +44,7 @@ export async function calculateSellerToCustomerShipping({
     deliverySpeed,
   });
 
-  return {
+  const result = {
     warehouse: {
       id: nearestWarehouse.id,
       latitude: nearestWarehouse.latitude,
@@ -38,5 +53,19 @@ export async function calculateSellerToCustomerShipping({
     },
     shipping,
   };
+
+  if (redis) {
+    try {
+      await redis.setex(
+        cacheKey,
+        cacheTtl.medium,
+        JSON.stringify(result)
+      );
+    } catch (err) {
+      console.error('Redis set error (combined shipping):', err);
+    }
+  }
+
+  return result;
 }
 
