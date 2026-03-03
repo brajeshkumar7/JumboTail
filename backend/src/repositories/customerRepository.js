@@ -6,10 +6,29 @@ class CustomerRepository extends BaseRepository {
     super(pool, 'customers');
   }
 
+  async findAll() {
+    return this.query(
+      'SELECT id, name, phone, latitude, longitude FROM customers ORDER BY id DESC',
+      []
+    );
+  }
+
   async findLocationById(id) {
     const rows = await this.query(
       'SELECT id, latitude, longitude FROM customers WHERE id = ? LIMIT 1',
       [id]
+    );
+    return rows[0] ?? null;
+  }
+
+  async create({ name, phone, latitude, longitude }) {
+    const [result] = await this.pool.execute(
+      'INSERT INTO customers (name, phone, latitude, longitude, created_at) VALUES (?, ?, ?, ?, NOW())',
+      [name, phone, latitude, longitude]
+    );
+    const rows = await this.query(
+      'SELECT id, name, phone, latitude, longitude FROM customers WHERE id = ? LIMIT 1',
+      [result.insertId]
     );
     return rows[0] ?? null;
   }

@@ -6,6 +6,13 @@ class WarehouseRepository extends BaseRepository {
     super(pool, 'warehouses');
   }
 
+  async findAll() {
+    return this.query(
+      'SELECT id, name, latitude, longitude FROM warehouses ORDER BY id DESC',
+      []
+    );
+  }
+
   async findLocationById(id) {
     const rows = await this.query(
       'SELECT id, latitude, longitude FROM warehouses WHERE id = ? LIMIT 1',
@@ -19,6 +26,18 @@ class WarehouseRepository extends BaseRepository {
       'SELECT id, latitude, longitude FROM warehouses',
       []
     );
+  }
+
+  async create({ name, latitude, longitude }) {
+    const [result] = await this.pool.execute(
+      'INSERT INTO warehouses (name, latitude, longitude, created_at) VALUES (?, ?, ?, NOW())',
+      [name, latitude, longitude]
+    );
+    const rows = await this.query(
+      'SELECT id, name, latitude, longitude FROM warehouses WHERE id = ? LIMIT 1',
+      [result.insertId]
+    );
+    return rows[0] ?? null;
   }
 }
 

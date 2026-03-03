@@ -1,6 +1,18 @@
 import dotenv from 'dotenv';
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
-dotenv.config();
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Load env from backend/.env if present; otherwise fall back to repo root .env
+// __dirname = backend/src/config
+const backendEnvPath = path.resolve(__dirname, '../../', '.env'); // backend/.env
+const rootEnvPath = path.resolve(__dirname, '../../../', '.env'); // repo root .env
+
+const envPath = fs.existsSync(backendEnvPath) ? backendEnvPath : rootEnvPath;
+dotenv.config({ path: envPath });
 
 export default {
   app: {

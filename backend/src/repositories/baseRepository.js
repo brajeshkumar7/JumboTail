@@ -10,7 +10,8 @@ export class BaseRepository {
   }
 
   async query(sql, params = []) {
-    const [rows] = await this.pool.execute(sql, params);
+    // Use `.query()` (not `.execute()`) so mysql2 can apply `??` identifier placeholders.
+    const [rows] = await this.pool.query(sql, params);
     return rows;
   }
 

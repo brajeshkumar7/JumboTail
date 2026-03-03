@@ -1,4 +1,6 @@
 import { create } from 'zustand';
+import { masterDataApi } from '../services/masterDataApi';
+import { shippingApi } from '../services/shippingApi';
 
 const initialSelectedOrder = {
   sellerId: '',
@@ -28,6 +30,7 @@ export const useShippingStore = create((set) => ({
   setSellers: (sellers) => set({ sellers }),
   setProducts: (products) => set({ products }),
   setCustomers: (customers) => set({ customers }),
+  setWarehouses: (warehouses) => set({ warehouses }),
 
   // Order selection helpers
   setSelectedOrder: (partial) =>
@@ -44,4 +47,89 @@ export const useShippingStore = create((set) => ({
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
   clearError: () => set({ error: null }),
+
+  // API actions
+  loadMasterData: async () => {
+    set({ loading: true, error: null });
+    try {
+      const [sellers, customers, products, warehouses] = await Promise.all([
+        masterDataApi.listSellers(),
+        masterDataApi.listCustomers(),
+        masterDataApi.listProducts(),
+        masterDataApi.listWarehouses(),
+      ]);
+      set({ sellers, customers, products, warehouses, loading: false });
+    } catch (err) {
+      set({ error: err?.data?.error || err.message, loading: false });
+      throw err;
+    }
+  },
+
+  createSeller: async (payload) => {
+    set({ loading: true, error: null });
+    try {
+      await masterDataApi.createSeller(payload);
+      const sellers = await masterDataApi.listSellers();
+      set({ sellers, loading: false });
+    } catch (err) {
+      set({ error: err?.data?.error || err.message, loading: false });
+      throw err;
+    }
+  },
+
+  createCustomer: async (payload) => {
+    set({ loading: true, error: null });
+    try {
+      await masterDataApi.createCustomer(payload);
+      const customers = await masterDataApi.listCustomers();
+      set({ customers, loading: false });
+    } catch (err) {
+      set({ error: err?.data?.error || err.message, loading: false });
+      throw err;
+    }
+  },
+
+  createWarehouse: async (payload) => {
+    set({ loading: true, error: null });
+    try {
+      await masterDataApi.createWarehouse(payload);
+      const warehouses = await masterDataApi.listWarehouses();
+      set({ warehouses, loading: false });
+    } catch (err) {
+      set({ error: err?.data?.error || err.message, loading: false });
+      throw err;
+    }
+  },
+
+  createProduct: async (payload) => {
+    set({ loading: true, error: null });
+    try {
+      await masterDataApi.createProduct(payload);
+      const products = await masterDataApi.listProducts();
+      set({ products, loading: false });
+    } catch (err) {
+      set({ error: err?.data?.error || err.message, loading: false });
+      throw err;
+    }
+  },
+
+  calculateShipping: async () => {
+    set({ loading: true, error: null, shippingResult: null });
+    try {
+      const state = useShippingStore.getState();
+      const o = state.selectedOrder;
+      const result = await shippingApi.calculateSellerShipping({
+        sellerId: Number(o.sellerId),
+        customerId: Number(o.customerId),
+        productId: Number(o.productId),
+        quantity: Number(o.quantity),
+        deliverySpeed: o.deliverySpeed,
+      });
+      set({ shippingResult: result, loading: false });
+      return result;
+    } catch (err) {
+      set({ error: err?.data?.error || err.message, loading: false });
+      throw err;
+    }
+  },
 }));
